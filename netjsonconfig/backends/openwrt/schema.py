@@ -391,7 +391,38 @@ schema = merge_config(default_schema, {
                                 }
                             }
                         }
-                    }
+                    },
+                    "port": {
+                        "type": "array",
+                        "title": "Ports",
+                        "uniqueItems": True,
+                        "additionalItems": True,
+                        "propertyOrder": 5,
+                        "items": {
+                            "type": "object",
+                            "title": "Port",
+                            "additionalProperties": True,
+                            "required": [
+                                "device",
+                                "port",
+                                "pvid"
+                            ],
+                            "properties": {
+                                "device": {
+                                    "type": "string",
+                                    "propertyOrder": 1,
+                                },
+                                "port": {
+                                    "type": "integer",
+                                    "propertyOrder": 2,
+                                },
+                                "pvid": {
+                                    "type": "integer",
+                                    "propertyOrder": 3,
+                                }
+                            }
+                        }
+                    },
                 }
             }
         },
