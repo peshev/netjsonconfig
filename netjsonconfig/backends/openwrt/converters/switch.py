@@ -30,27 +30,29 @@ class Switch(OpenWrtConverter):
                      switch['name'],
         })
         vlans = []
+        if 'vlan' in switch:
+            for i, vlan in enumerate(switch['vlan'], start=1):
+                vlan.update({
+                    '.type': 'switch_vlan',
+                    '.name': vlan.pop('id', None) or
+                             self.__get_vlan_name(switch['name'], i)
+                })
+                if 'vid' not in vlan:
+                    vlan['vid'] = vlan['vlan']
+                vlans.append(self.sorted_dict(vlan))
+            del switch['vlan']
+
         ports = []
-        for i, vlan in enumerate(switch['vlan'], start=1):
-            vlan.update({
-                '.type': 'switch_vlan',
-                '.name': vlan.pop('id', None) or
-                         self.__get_vlan_name(switch['name'], i)
-            })
-            if 'vid' not in vlan:
-                vlan['vid'] = vlan['vlan']
-            vlans.append(self.sorted_dict(vlan))
+        if 'port' in switch:
+            for i, port in enumerate(switch['port'], start=1):
+                port.update({
+                    '.type': 'switch_port',
+                    '.name': port.pop('id', None) or
+                             self.__get_port_name(switch['name'], i)
+                })
+                ports.append(self.sorted_dict(port))
+            del switch['port']
 
-        for i, port in enumerate(switch['port'], start=1):
-            port.update({
-                '.type': 'switch_port',
-                '.name': port.pop('id', None) or
-                         self.__get_port_name(switch['name'], i)
-            })
-            ports.append(self.sorted_dict(port))
-
-        del switch['vlan']
-        del switch['port']
         return [self.sorted_dict(switch)] + vlans + ports
 
     def __get_vlan_name(self, name, i):
