@@ -29,10 +29,9 @@ class Switch(OpenWrtConverter):
             '.name': switch.pop('id', None) or
                      switch['name'],
         })
-        i = 1
         vlans = []
         ports = []
-        for vlan in switch['vlan']:
+        for i, vlan in enumerate(switch['vlan'], start=1):
             vlan.update({
                 '.type': 'switch_vlan',
                 '.name': vlan.pop('id', None) or
@@ -41,20 +40,18 @@ class Switch(OpenWrtConverter):
             if 'vid' not in vlan:
                 vlan['vid'] = vlan['vlan']
             vlans.append(self.sorted_dict(vlan))
-            i += 1
 
-        for port in switch['port']:
+        for i, port in enumerate(switch['port'], start=1):
             port.update({
                 '.type': 'switch_port',
                 '.name': port.pop('id', None) or
                          self.__get_port_name(switch['name'], i)
             })
             ports.append(self.sorted_dict(port))
-            i += 1
 
         del switch['vlan']
         del switch['port']
-        return [self.sorted_dict(switch)] + vlans
+        return [self.sorted_dict(switch)] + vlans + ports
 
     def __get_vlan_name(self, name, i):
         return '{0}_vlan{1}'.format(name, i)
