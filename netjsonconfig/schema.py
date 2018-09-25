@@ -279,6 +279,36 @@ schema = {
                 {"$ref": "#/definitions/interface_settings"},
             ]
         },
+        "vlan_interface": {
+            "allOf": [
+                {
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "enum": ["vlan"],
+                            "propertyOrder": 1
+                        },
+                        "parent": {
+                            "type": "string",
+                            "title": "Parent interface name"
+                        },
+                        "vid": {
+                            "type": "integer",
+                            "title": "VID of the VLAN interface"
+                        },
+                        "vlan_type": {
+                            "type": "string",
+                            "enum": [
+                                "8021q",
+                                "8021ad"
+                            ],
+                            "default": "8021q"
+                        }
+                    }
+                },
+                {"$ref": "#/definitions/interface_settings"},
+            ]
+        },
         "base_wireless_settings": {
             "type": "object",
             "title": "Wireless Settings",
@@ -941,7 +971,8 @@ schema = {
                 "oneOf": [
                     {"$ref": "#/definitions/network_interface"},
                     {"$ref": "#/definitions/wireless_interface"},
-                    {"$ref": "#/definitions/bridge_interface"}
+                    {"$ref": "#/definitions/bridge_interface"},
+                    {"$ref": "#/definitions/vlan_interface"}
                 ]
             }
         },

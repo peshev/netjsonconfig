@@ -10,15 +10,24 @@ from .base import OpenWrtConverter
 class Interfaces(OpenWrtConverter):
     netjson_key = 'interfaces'
     intermediate_key = 'network'
-    _uci_types = ['interface', 'globals']
+    _uci_types = ['interface', 'device', 'globals']
+
+    def __init__(self, backend):
+        super().__init__(backend)
+
+        self._interface_map = {}
 
     def to_intermediate_loop(self, block, result, index=None):
-        uci_name = self._get_uci_name(block.get('network') or block['name'])
+        result.setdefault('network', [])
+        name = block.get('network') or block['name']
+        uci_name = self._get_uci_name(name)
+        device = self.__intermediate_vlan(block, name)
+        if device:
+            result['network'].append(self.sorted_dict(device))
         address_list = self.__intermediate_addresses(block)
         interface = self.__intermediate_interface(block, uci_name)
         # create one or more "config interface" UCI blocks
-        i = 1
-        for address in address_list:
+        for i, address in enumerate(address_list, start=1):
             uci_interface = deepcopy(interface)
             # add suffix to logical name when
             # there is more than one interface
@@ -32,9 +41,7 @@ class Interfaces(OpenWrtConverter):
             uci_interface = self.__intermediate_bridge(uci_interface, i)
             if address:
                 uci_interface.update(address)
-            result.setdefault('network', [])
             result['network'].append(self.sorted_dict(uci_interface))
-            i += 1
         return result
 
     def __intermediate_addresses(self, interface):
@@ -85,8 +92,9 @@ class Interfaces(OpenWrtConverter):
         converts NetJSON interface to
         UCI intermediate data structure
         """
+        if '.type' not in interface:
+            interface['.type'] = 'interface'
         interface.update({
-            '.type': 'interface',
             '.name': uci_name,
             'ifname': interface.pop('name')
         })
@@ -153,6 +161,29 @@ class Interfaces(OpenWrtConverter):
             del interface['type']
         return interface
 
+    def __intermediate_vlan(self, interface, uci_name):
+        def update(src, dst, keys):
+            for src_key, dst_key in keys:
+                if src_key in src:
+                    dst[dst_key] = src[src_key]
+                    del src[src_key]
+            return dst
+
+        if interface['type'] == 'vlan':
+            return update(
+                interface,
+                {
+                    '.type': 'device',
+                    '.name': uci_name,
+                },
+                [
+                    ('mac', 'macaddr'),
+                    ('parent', 'ifname'),
+                    ('vlan_type', 'type'),
+                    ('vid', 'vid')
+                ]
+            )
+
     def __intermediate_proto(self, interface, address):
         """
         determines UCI interface "proto" option
@@ -195,6 +226,7 @@ class Interfaces(OpenWrtConverter):
 
     def to_netjson_loop(self, block, result, index):
         _type = block.get('.type')
+        _name = block.get('.name')
         if _type == 'globals':
             ula_prefix = block.get('ula_prefix')
             if ula_prefix:
@@ -206,8 +238,36 @@ class Interfaces(OpenWrtConverter):
             interface = self.__netjson_interface(block)
             self.__netjson_dns(interface, result)
             result.setdefault('interfaces', [])
-            result['interfaces'].append(interface)
+            if _name not in self._interface_map:
+                result['interfaces'].append(interface)
+                self._interface_map[_name] = interface
+            else:
+                self._interface_map[_name].update(interface)
+        elif _type == 'device':
+            if _name not in self._interface_map:
+                interface = {}
+                result['interfaces'].append(interface)
+                self._interface_map[_name] = interface
+            else:
+                interface = self._interface_map[_name]
+
+            self.__netjson_vlan(interface, block)
+
         return result
+
+    def __netjson_vlan(self, interface, block):
+        interface.update({
+            'name': block['name'],
+            'type': 'vlan',
+            'vlan': {
+                'type': block['type'],
+                'vid': block['vid'],
+                'parent': block['ifname']
+            }
+        })
+        if 'macaddr' in block:
+            interface['mac'] = block['macaddr']
+        return interface
 
     def __netjson_interface(self, interface):
         del interface['.type']

@@ -1586,3 +1586,30 @@ config interface 'eth0'
     option proto 'none'
 """)
         self.assertEqual(o.render(), expected)
+
+    def test_render_vlan(self):
+        o = OpenWrt({
+            "interfaces": [
+                {
+                    "name": "eth0.1",
+                    "type": "vlan",
+                    "vid": 1,
+                    "parent": "eth0",
+                    "vlan_type": "8021q",
+                    "mac": "00:00:00:00:00:00"
+                }
+            ],
+        })
+        expected = self._tabs("""package network
+
+config device 'eth0.1'
+    option ifname 'eth0'
+    option macaddr '00:00:00:00:00:00'
+    option type '8021q'
+    option vid '1'
+
+config interface 'eth0_1'
+    option ifname 'eth0.1'
+    option proto 'none'
+""")
+        self.assertEqual(o.render(), expected)
