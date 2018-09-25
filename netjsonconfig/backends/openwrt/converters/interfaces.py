@@ -27,11 +27,8 @@ class Interfaces(OpenWrtConverter):
 
     def to_intermediate_loop(self, block, result, index=None):
         result.setdefault('network', [])
-        name = block.get('network') or block['name']
-        uci_name = self._get_uci_name(name)
-        if block['type'] == 'vlan':
-            uci_name = "vlan_{}".format(uci_name)
-        device = self.__intermediate_vlan(block, name)
+        uci_name = self._get_uci_name(block.get('network') or block['name'])
+        device = self.__intermediate_vlan(block, uci_name)
         if device:
             result['network'].append(self.sorted_dict(device))
         address_list = self.__intermediate_addresses(block)
@@ -177,7 +174,8 @@ class Interfaces(OpenWrtConverter):
                 interface,
                 {
                     '.type': 'device',
-                    '.name': uci_name,
+                    '.name': 'vlan_{}'.format(uci_name),
+                    'name': '{parent}.{vid}'.format(**interface)
                 },
                 [
                     ('mac', 'macaddr'),
