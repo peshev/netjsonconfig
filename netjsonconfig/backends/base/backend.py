@@ -265,7 +265,7 @@ class BaseBackend(object):
             if value:
                 self.intermediate_data = merge_config(self.intermediate_data,
                                                       value,
-                                                      list_identifiers=['.name'])
+                                                      list_identifiers=[('.name','.type')])
 
     def parse(self, native):
         """
