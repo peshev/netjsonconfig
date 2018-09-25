@@ -29,6 +29,8 @@ class Interfaces(OpenWrtConverter):
         result.setdefault('network', [])
         name = block.get('network') or block['name']
         uci_name = self._get_uci_name(name)
+        if block['type'] == 'vlan':
+            uci_name = "vlan_{}".format(uci_name)
         device = self.__intermediate_vlan(block, name)
         if device:
             result['network'].append(self.sorted_dict(device))

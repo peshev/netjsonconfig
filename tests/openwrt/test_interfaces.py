@@ -1608,7 +1608,7 @@ config device 'eth0_1'
     option type '8021q'
     option vid '1'
 
-config interface 'eth0_1'
+config interface 'vlan_eth0_1'
     option ifname 'eth0_1'
     option proto 'none'
 """)
