@@ -17,6 +17,14 @@ class Interfaces(OpenWrtConverter):
 
         self._interface_map = {}
 
+    @staticmethod
+    def update(src, dst, keys):
+        for src_key, dst_key in keys:
+            if src_key in src:
+                dst[dst_key] = src[src_key]
+                del src[src_key]
+        return dst
+
     def to_intermediate_loop(self, block, result, index=None):
         result.setdefault('network', [])
         name = block.get('network') or block['name']
@@ -162,15 +170,8 @@ class Interfaces(OpenWrtConverter):
         return interface
 
     def __intermediate_vlan(self, interface, uci_name):
-        def update(src, dst, keys):
-            for src_key, dst_key in keys:
-                if src_key in src:
-                    dst[dst_key] = src[src_key]
-                    del src[src_key]
-            return dst
-
         if interface['type'] == 'vlan':
-            return update(
+            return self.update(
                 interface,
                 {
                     '.type': 'device',
@@ -256,17 +257,14 @@ class Interfaces(OpenWrtConverter):
         return result
 
     def __netjson_vlan(self, interface, block):
-        interface.update({
-            'name': block['name'],
-            'type': 'vlan',
-            'vlan': {
-                'type': block['type'],
-                'vid': block['vid'],
-                'parent': block['ifname']
-            }
-        })
-        if 'macaddr' in block:
-            interface['mac'] = block['macaddr']
+        self.update(interface, block, [
+            ('name', 'name'),
+            ('type', 'vlan_type'),
+            ('vid', 'vid'),
+            ('ifname', 'parent'),
+            ('macaddr', 'mac')
+        ])
+        interface['type'] = 'vlan'
         return interface
 
     def __netjson_interface(self, interface):
