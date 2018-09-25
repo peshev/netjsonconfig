@@ -101,10 +101,10 @@ class Interfaces(OpenWrtConverter):
         """
         if '.type' not in interface:
             interface['.type'] = 'interface'
-        interface.update({
-            '.name': uci_name,
-            'ifname': interface.pop('name')
-        })
+        if 'ifname' not in interface:
+            interface['ifname'] = interface.pop('name')
+        interface['.name'] = uci_name
+
         if 'network' in interface:
             del interface['network']
         if 'mac' in interface:
@@ -170,12 +170,14 @@ class Interfaces(OpenWrtConverter):
 
     def __intermediate_vlan(self, interface, uci_name):
         if interface['type'] == 'vlan':
+            ifname = '{parent}.{vid}'.format(**interface)
+            interface['ifname'] = ifname
             return self.update(
                 interface,
                 {
                     '.type': 'device',
                     '.name': 'vlan_{}'.format(uci_name),
-                    'name': '{parent}.{vid}'.format(**interface)
+                    'name': ifname
                 },
                 [
                     ('mac', 'macaddr'),
