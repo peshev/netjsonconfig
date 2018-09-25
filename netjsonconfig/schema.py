@@ -280,6 +280,7 @@ schema = {
             ]
         },
         "vlan_interface": {
+            "title": "Bridge interface",
             "allOf": [
                 {
                     "properties": {
