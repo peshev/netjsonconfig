@@ -60,10 +60,7 @@ def merge_list(list1, list2, identifiers=None):
             # if el is a dict, merge by keys specified in ``identifiers``
             if isinstance(el, dict):
                 for id_key in identifiers:
-                    if isinstance(id_key, tuple):
-                        key = tuple(el.get(k) for k in id_key)
-                        break
-                    elif id_key in el:
+                    if id_key in el:
                         key = el[id_key]
                         break
             container[key] = deepcopy(el)
