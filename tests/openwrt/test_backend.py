@@ -186,6 +186,37 @@ config wifi-iface 'wifi_wlan0'
         self.assertEqual(contents, expected)
         tar.close()
 
+    def test_generate_vlan(self):
+        o = OpenWrt({
+            "interfaces": [
+                {
+                    "name": "eth0_1",
+                    "type": "vlan",
+                    "vid": 1,
+                    "parent": "eth0",
+                    "vlan_type": "8021q",
+                    "mac": "00:00:00:00:00:00"
+                }
+            ],
+        })
+        tar = tarfile.open(fileobj=o.generate(), mode='r')
+        self.assertEqual(len(tar.getmembers()), 1)
+        # network
+        network = tar.getmember('etc/config/network')
+        contents = tar.extractfile(network).read().decode()
+        expected = self._tabs("""config device 'eth0_1'
+	option ifname 'eth0'
+	option macaddr '00:00:00:00:00:00'
+	option type '8021q'
+	option vid '1'
+
+config interface 'eth0_1'
+	option ifname 'eth0_1'
+	option proto 'none'
+""")
+        self.assertEqual(contents, expected)
+        tar.close()
+
     def test_double_rendering(self):
         o = OpenWrt(self._config1)
         self.assertEqual(o.render(), o.render())
