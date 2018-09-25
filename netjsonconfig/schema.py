@@ -299,6 +299,7 @@ schema = {
                         },
                         "vlan_type": {
                             "type": "string",
+                            "title": "VLAN type",
                             "enum": [
                                 "8021q",
                                 "8021ad"
